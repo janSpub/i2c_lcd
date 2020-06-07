@@ -18,7 +18,6 @@ def get_ip():
     """Detect current IP address. If can't detect - return 127.0.0.1."""
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
-        # doesn't even have to be reachable
         s.connect(('10.255.255.255', 1))
         ip = s.getsockname()[0]
     except:
@@ -30,6 +29,7 @@ def get_ip():
 
 def display_ip():
     # type: () -> None
+    """Detect IP address and show it on the LCD."""
     try:
         lcd = I2CLcd(hot_start=True)
     except OSError:
@@ -59,11 +59,13 @@ def display_ip():
 
 def init_lcd():
     # type: () -> None
+    """Initialize the LCD."""
     I2CLcd(hot_start=False)
 
 
 def switch_backlight():
     # type: () -> None
+    """Switch a backlight of the LCD. Pass "on"/"off" as first argument to enable/disable a backlight."""
     parser = argparse.ArgumentParser()
     parser.add_argument('state', choices=['on', 'off'])
     args = parser.parse_args()
@@ -73,6 +75,7 @@ def switch_backlight():
 
 def write():
     # type: () -> None
+    """Write string from first argument to the LCD. Use "--line num" to select line number."""
     parser = argparse.ArgumentParser()
     parser.add_argument('string')
     parser.add_argument('--line', type=int, choices=[1, 2], default=1)
@@ -84,5 +87,6 @@ def write():
 
 def clear():
     # type: () -> None
+    """Clear the display of the LCD."""
     lcd = I2CLcd()
     lcd.clear_display()
