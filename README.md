@@ -31,7 +31,7 @@ lcd.write('Line 2!')
 ```
 
 ### Entry-points
-If the package is installed `via` pip there are several commands available
+If the package is installed via `pip` there are several commands available
 for use:
 * `lcd-init` - initialize the LCD. Must be used at first run or after power
 reset;
