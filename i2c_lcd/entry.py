@@ -6,11 +6,27 @@ __author__ = 'Boris Polyanskiy'
 
 
 import argparse
+import logging
 import socket
 import time
 import typing
 
 from i2c_lcd.lcd import I2CLcd
+
+
+logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.ERROR)
+
+
+def log_not_connected(func):
+    # type: (typing.Callable) -> typing.Callable
+    """Decorator function to catch non-connected LCD situation (show error message instead of traceback)."""
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except OSError as err:
+            logging.error('Failed to initialize LCD: "{}". Is it connected?'.format(err))
+            return True
+    return wrapper
 
 
 def get_ip():
@@ -27,14 +43,11 @@ def get_ip():
     return ip
 
 
+@log_not_connected
 def display_ip():
     # type: () -> None
     """Detect IP address and show it on the LCD."""
-    try:
-        lcd = I2CLcd(hot_start=True)
-    except OSError:
-        print('I2C lcd not connected!')
-        return
+    lcd = I2CLcd(warm_start=True)
 
     while True:
         ip = get_ip()
@@ -57,22 +70,25 @@ def display_ip():
         break
 
 
+@log_not_connected
 def init_lcd():
     # type: () -> None
     """Initialize the LCD."""
-    I2CLcd(hot_start=False)
+    I2CLcd(warm_start=False)
 
 
+@log_not_connected
 def switch_backlight():
     # type: () -> None
     """Switch a backlight of the LCD. Pass "on"/"off" as first argument to enable/disable a backlight."""
     parser = argparse.ArgumentParser()
     parser.add_argument('state', choices=['on', 'off'])
     args = parser.parse_args()
-    lcd = I2CLcd(hot_start=True)
+    lcd = I2CLcd(warm_start=True)
     lcd.set_backlight(args.state == 'on')
 
 
+@log_not_connected
 def write():
     # type: () -> None
     """Write string from first argument to the LCD. Use "--line num" to select line number."""
@@ -80,11 +96,12 @@ def write():
     parser.add_argument('string')
     parser.add_argument('--line', type=int, choices=[1, 2], default=1)
     args = parser.parse_args()
-    lcd = I2CLcd(hot_start=True)
+    lcd = I2CLcd(warm_start=True)
     lcd.set_cursor(line=args.line)
     lcd.write(args.string)
 
 
+@log_not_connected
 def clear():
     # type: () -> None
     """Clear the display of the LCD."""
