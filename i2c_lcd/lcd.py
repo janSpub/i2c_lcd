@@ -15,13 +15,13 @@ from i2c_lcd.i2c import I2CDevice
 class I2CLcd(I2CDevice):
     """Class to control 1-line/2-line lcd via i2c interface."""
 
-    def __init__(self, line2=True, dots5x11=False, hot_start=False):
+    def __init__(self, line2=True, dots5x11=False, warm_start=False):
         # type: (bool, bool, bool) -> None
         """
 
         :param line2: True for 2-line display, False for 1-line.
         :param dots5x11: True for 5x11 dots format display mode, False for 5x8.
-        :param hot_start: True for skip lcd initialization, False - not.
+        :param warm_start: True for skip lcd initialization, False - not.
         """
 
         I2CDevice.__init__(self, 0x27)
@@ -29,7 +29,7 @@ class I2CLcd(I2CDevice):
         self.__line = None
 
         # Initialize display
-        if not hot_start:
+        if not warm_start:
             self._write(0b110011)
             self._write(0b110010)
             sleep(0.002)
@@ -204,13 +204,13 @@ class I2CLcd(I2CDevice):
 
         # High bits
         self.write_byte(bits_high)
-        self.enable(bits_high)
+        self._enable(bits_high)
 
         # Low bits
         self.write_byte(bits_low)
-        self.enable(bits_low)
+        self._enable(bits_low)
 
-    def enable(self, value):
+    def _enable(self, value):
         # type: (int) -> None
         """Toggle enable."""
         enable_bit = 0b100

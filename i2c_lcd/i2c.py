@@ -1,3 +1,7 @@
+"""Methods for working with i2c devices."""
+
+__author__ = 'Boris Polyanskiy'
+
 from time import sleep
 try:
     import smbus
