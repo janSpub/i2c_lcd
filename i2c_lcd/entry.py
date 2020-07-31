@@ -51,7 +51,7 @@ def display_ip():
 
     while True:
         ip = get_ip()
-        lcd.clear_display()
+        lcd.clear()
         if ip == '127.0.0.1':
             lcd.set_cursor()
             lcd.write('Loaded')
@@ -106,4 +106,4 @@ def clear():
     # type: () -> None
     """Clear the display of the LCD."""
     lcd = I2CLcd()
-    lcd.clear_display()
+    lcd.clear()
