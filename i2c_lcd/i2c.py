@@ -19,7 +19,6 @@ class I2CDevice:
         :param addr: address of i2c device
         :param port: i2c bus: 0 - original Pi, 1 - Rev 2 Pi
         """
-
         self.addr = addr
         self.bus = smbus.SMBus(port)
 

@@ -6,10 +6,23 @@ from __future__ import unicode_literals
 
 __author__ = 'Boris Polyanskiy'
 
-from time import sleep
+import sys
+import time
 import typing
 
 from i2c_lcd.i2c import I2CDevice
+
+
+def deprecated(info):
+    # type: (typing.Text) -> typing.Callable
+    """Decorator to mark method deprecated and print `info` instructions."""
+
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            sys.stderr.write('WARNING: call to deprecated method "{}". {}'.format(func.__name__, info))
+            return func(*args, **kwargs)
+        return wrapper
+    return decorator
 
 
 class I2CLcd(I2CDevice):
@@ -18,28 +31,31 @@ class I2CLcd(I2CDevice):
     def __init__(self, line2=True, dots5x11=False, warm_start=False):
         # type: (bool, bool, bool) -> None
         """
-
         :param line2: True for 2-line display, False for 1-line.
         :param dots5x11: True for 5x11 dots format display mode, False for 5x8.
         :param warm_start: True for skip lcd initialization, False - not.
         """
-
         I2CDevice.__init__(self, 0x27)
         self.__backlight = True
         self.__line = None
+
+        self.__display = True
+        self.__cursor = False
+        self.__blink = False
+        self.__shift_display = False
+        self.__shift_reversed = False
 
         # Initialize display
         if not warm_start:
             self._write(0b110011)
             self._write(0b110010)
-            sleep(0.002)
+            time.sleep(0.002)
 
         self.function_set(two_line=line2, dots_5x11=dots5x11)
         self.set_display()
         self.set_shift_mode()
         self.set_cursor()
         self.set_backlight()
-        # self.clear_display()
 
     @property
     def backlight_bits(self):
@@ -47,26 +63,125 @@ class I2CLcd(I2CDevice):
         """Backlight in command format (0b100 or 0b000)"""
         return self.__backlight << 3
 
+    @deprecated('Use "clear" instead.')
     def clear_display(self):
+        # type: () -> None
+        """Alias for `clear` for backward compatibility."""
+        self.clear()
+
+    def clear(self):
         # type: () -> None
         """Clear display.
         Return cursor to original position if shifted (left edge on first line of the display).
-        :return: None
         """
-
         self._write(0b1)
 
     def return_home(self):
         # type: () -> None
-        """Return cursor to original position if shifted (left edge on first line of the display).
-        :return: None
-        """
-
+        """Return cursor to original position if shifted (left edge on first line of the display)."""
         self._write(0b10)
+
+    def enable_display(self):
+        # type: () -> None
+        """Enable display mode.
+
+        In this mode characters and cursor (if enabled) are shown on the LCD. It is not a backlight!
+        It is an alias for `set_display`.
+        """
+        self.set_display(display=True, cursor=self.__cursor, blink=self.__blink)
+
+    def disable_display(self):
+        # type: () -> None
+        """Disable display mode.
+
+        In this mode characters and cursor aren't shown on the LCD. It is not a backlight!
+        It is an alias for `set_display`.
+        """
+        self.set_display(display=False, cursor=self.__cursor, blink=self.__blink)
+
+    def enable_cursor(self):
+        # type: () -> None
+        """Enable cursor displaying mode.
+
+        In this mode cursor (_) is shown on the LCD. Can be displayed along with blink (`enable_blink`).
+        It is an alias for `set_display`.
+        """
+        self.set_display(display=self.__display, cursor=True, blink=self.__blink)
+
+    def disable_cursor(self):
+        # type: () -> None
+        """Disable cursor displaying mode.
+
+        In this mode cursor (_) isn't shown on the LCD.
+        It is an alias for `set_display`.
+        """
+        self.set_display(display=self.__display, cursor=False, blink=self.__blink)
+
+    def enable_blink(self):
+        # type: () -> None
+        """Enable blink displaying mode.
+
+        In this mode blink is shown on the LCD. Can be displayed along with cursor (`enable_cursor`).
+        It is an alias for `set_display`.
+        """
+        self.set_display(display=self.__display, cursor=self.__cursor, blink=True)
+
+    def disable_blink(self):
+        # type: () -> None
+        """Disable blink displaying mode.
+
+        In this mode blink isn't shown on the LCD.
+        It is an alias for `set_display`.
+        """
+        self.set_display(display=self.__display, cursor=self.__cursor, blink=False)
+
+    def enable_shift_display(self):
+        # type: () -> None
+        """Shift the display while writing on the LCD. The cursor is fixed.
+
+        lcd.enable_shift_display()
+        lcd.write(' a')
+        | |a|_| | |
+        lcd.write('b')
+        |a|b|_| | |
+
+        This is an alias for `set_shift_mode`.
+        """
+        self.set_shift_mode(display=True, reverse=self.__shift_reversed)
+
+    def enable_shift_cursor(self):
+        # type: () -> None
+        """Shift the cursor while writing on the LCD. The display is fixed.
+
+        lcd.enable_shift_cursor()
+        lcd.write(' a')
+        | |a|_| | |
+        lcd.write('b')
+        | |a|b|_| |
+
+        This is an alias for `set_shift_mode`.
+        """
+        self.set_shift_mode(display=False, reverse=self.__shift_reversed)
+
+    def enable_reverse(self):
+        # type: () -> None
+        """Set reverse direction mode for writing (right to left).
+
+        This is an alias for `set_shift_mode`.
+        """
+        self.set_shift_mode(display=self.__shift_display, reverse=True)
+
+    def disable_reverse(self):
+        # type: () -> None
+        """Set default direction mode for writing (left to right).
+
+        This is an alias for `set_shift_mode`.
+        """
+        self.set_shift_mode(display=self.__shift_display, reverse=False)
 
     def set_shift_mode(self, display=False, reverse=False):
         # type: (bool, bool) -> None
-        """Set cursor move mode or display shift. Also set direction of move/shift.
+        """Set cursor/display shift mode. Also set direction of move/shift.
 
         In cursor move mode cursor will move to next position after writing character (display=False).
         In display shift mode cursor will stay on current position, but display will move to specified direction (
@@ -83,7 +198,7 @@ class I2CLcd(I2CDevice):
         :param reverse: True for move/shift direction left to right, False for right to left.
         :return: None
         """
-
+        self.__shift_display, self.__shift_reversed = display, reverse
         self._write(0b100 | display | (not reverse) << 1)
 
     def set_display(self, display=True, cursor=False, blink=False):
@@ -91,7 +206,8 @@ class I2CLcd(I2CDevice):
         """Set display parameters.
 
         | 1 | D | C | B |
-        D - display (1 turned on, 0 turned off). It is not backlight!
+        D - display (1 turned on, 0 turned off). It is not backlight, it enable/disable displaying any
+        character/cursor on the LCD.
         C - cursor (1 turned on, 0 turned off).
         B - cursor blink (1 blink is on, 0 blink is off).
 
@@ -100,7 +216,7 @@ class I2CLcd(I2CDevice):
         :param blink: True for enable blink, False for disable.
         :return: None
         """
-
+        self.__display, self.__cursor, self.__blink = display, cursor, blink
         self._write(0b1000 | display << 2 | cursor << 1 | blink)
 
     def function_set(self, two_line=True, dots_5x11=False):
@@ -117,7 +233,6 @@ class I2CLcd(I2CDevice):
         :param dots_5x11: True for 5x11 dots format display mode, False for 5x8.
         :return: None
         """
-
         self._write(0b100000 | two_line << 3 | dots_5x11 << 2)
         self.__line = two_line
 
@@ -129,7 +244,6 @@ class I2CLcd(I2CDevice):
         :param position: position in line.
         :return: None
         """
-
         position -= 1
         if line < 1 or line > (2 if self.__line else 1):
             raise ValueError('Line can be 1{}!'.format(' or 2' if self.__line else ''))
@@ -156,7 +270,6 @@ class I2CLcd(I2CDevice):
         :param string: string or letter.
         :return: None
         """
-
         for letter in string:
             self.write_value(ord(letter))
 
@@ -181,7 +294,6 @@ class I2CLcd(I2CDevice):
         :param position: position in CGRAM (0-7)
         :return: None
         """
-
         # 0b1000000 - set CGRAM
         if position > 7 or position < 0:
             raise ValueError('Position can be 0-7!')
@@ -197,7 +309,6 @@ class I2CLcd(I2CDevice):
         :param data_mode: True for data mode, False for command mode.
         :return: None
         """
-
         mode = int(data_mode)
         bits_high = mode | (value & 0xF0) | self.backlight_bits
         bits_low = mode | ((value << 4) & 0xF0) | self.backlight_bits
@@ -215,11 +326,11 @@ class I2CLcd(I2CDevice):
         """Toggle enable."""
         enable_bit = 0b100
 
-        sleep(0.0005)
+        time.sleep(0.0005)
         self.write_byte(value | enable_bit)
-        sleep(0.0005)
+        time.sleep(0.0005)
         self.write_byte(value & ~enable_bit)
-        sleep(0.0005)
+        time.sleep(0.0005)
 
     def set_backlight(self, enable=True):
         # type: (bool) -> None
@@ -228,7 +339,6 @@ class I2CLcd(I2CDevice):
         :param enable: True to enable backlight, False to disable.
         :return: None
         """
-
         self.__backlight = bool(enable)
         self.write_byte(self.backlight_bits)
 
@@ -242,7 +352,6 @@ class I2CLcd(I2CDevice):
         :param left: True for left direction, False for right
         :return: None
         """
-
         self._write(0b10000 | (not left) << 2)
 
     def shift_display(self, left=False):
@@ -255,5 +364,4 @@ class I2CLcd(I2CDevice):
         :param left: True for left direction, False for right
         :return: None
         """
-
         self._write(0b11000 | (not left) << 2)
