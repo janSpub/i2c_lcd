@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+
 import codecs
 import os.path
 import re
@@ -18,7 +19,7 @@ setup(
     name='i2c_lcd',
     author=author,
     version=version,
-    description='Package for control 1-line/2-line lcd display via i2c interface',
+    description='Library for controlling 1-line/2-line lcd display via i2c interface',
     long_description=open(os.path.join(base_dir, 'README.md')).read(),
     packages=['i2c_lcd'],
     entry_points={

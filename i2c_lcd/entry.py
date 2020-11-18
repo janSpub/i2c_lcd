@@ -31,7 +31,10 @@ def log_not_connected(func):
 
 def get_ip():
     # type: () -> typing.Text
-    """Detect current IP address. If can't detect - return 127.0.0.1."""
+    """Detect current IP address.
+
+    If can't detect - return 127.0.0.1.
+    """
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         s.connect(('10.255.255.255', 1))

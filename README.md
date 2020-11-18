@@ -1,7 +1,7 @@
 # i2c_lcd
 
 ## Description
-i2c_lcd - module for controlling 1-line/2-line LCD display via i2c interface.
+i2c_lcd - a library for controlling 1-line/2-line LCD display via i2c interface on Raspberry PI.
 
 ## Requirements
 * python 2/3
@@ -9,6 +9,11 @@ i2c_lcd - module for controlling 1-line/2-line LCD display via i2c interface.
   ```cmd
   sudo apt-get install i2c-tools
   sudo apt-get install python-smbus
+  ```
+* enable i2c interface on your Raspberry PI
+  ```cmd
+  sudo rapsi-config
+  # Interface Options > I2C > Yes
   ```
 
 ## Installation

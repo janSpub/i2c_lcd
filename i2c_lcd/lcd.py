@@ -1,10 +1,11 @@
-"""
-Module to control 1-line/2-line lcd via i2c interface.
-"""
+"""Module to control 1-line/2-line lcd via i2c interface."""
+
 
 from __future__ import unicode_literals
 
+
 __author__ = 'Boris Polyanskiy'
+
 
 import sys
 import time
@@ -31,9 +32,9 @@ class I2CLcd(I2CDevice):
     def __init__(self, line2=True, dots5x11=False, warm_start=False):
         # type: (bool, bool, bool) -> None
         """
-        :param line2: True for 2-line display, False for 1-line.
-        :param dots5x11: True for 5x11 dots format display mode, False for 5x8.
-        :param warm_start: True for skip lcd initialization, False - not.
+        :param line2: True for 2-line display, False for 1-line
+        :param dots5x11: True for 5x11 dots format display mode, False for 5x8
+        :param warm_start: True for skip lcd initialization, False - not
         """
         I2CDevice.__init__(self, 0x27)
         self.__backlight = True
@@ -60,7 +61,7 @@ class I2CLcd(I2CDevice):
     @property
     def backlight_bits(self):
         # type: () -> int
-        """Backlight in command format (0b100 or 0b000)"""
+        """Backlight in command format (0b100 or 0b000)."""
         return self.__backlight << 3
 
     @deprecated('Use "clear" instead.')
@@ -72,6 +73,7 @@ class I2CLcd(I2CDevice):
     def clear(self):
         # type: () -> None
         """Clear display.
+
         Return cursor to original position if shifted (left edge on first line of the display).
         """
         self._write(0b1)
@@ -194,8 +196,8 @@ class I2CLcd(I2CDevice):
         111 - shift of entire display to left.
         101 - shift of entire display to right.
 
-        :param display: True for display shift mode, False for cursor move mode.
-        :param reverse: True for move/shift direction left to right, False for right to left.
+        :param display: True for display shift mode, False for cursor move mode
+        :param reverse: True for move/shift direction left to right, False for right to left
         :return: None
         """
         self.__shift_display, self.__shift_reversed = display, reverse
@@ -211,9 +213,9 @@ class I2CLcd(I2CDevice):
         C - cursor (1 turned on, 0 turned off).
         B - cursor blink (1 blink is on, 0 blink is off).
 
-        :param display: True for turn on display, False for turn off.
-        :param cursor: True for turn on cursor, False for turn off.
-        :param blink: True for enable blink, False for disable.
+        :param display: True for turn on display, False for turn off
+        :param cursor: True for turn on cursor, False for turn off
+        :param blink: True for enable blink, False for disable
         :return: None
         """
         self.__display, self.__cursor, self.__blink = display, cursor, blink
@@ -229,8 +231,8 @@ class I2CLcd(I2CDevice):
         N - display  line number control bit (1 - 2-line display mode, 1 - 1-line display mode).
         F - display font type control bit (1 - 5x11 dots format display mode, 0 - 5x8).
 
-        :param two_line: True for 2-line display, False for 1-line.
-        :param dots_5x11: True for 5x11 dots format display mode, False for 5x8.
+        :param two_line: True for 2-line display, False for 1-line
+        :param dots_5x11: True for 5x11 dots format display mode, False for 5x8
         :return: None
         """
         self._write(0b100000 | two_line << 3 | dots_5x11 << 2)
@@ -240,8 +242,8 @@ class I2CLcd(I2CDevice):
         # type: (int, int) -> None
         """Change cursor position.
 
-        :param line: number of line of lcd (1 or 2).
-        :param position: position in line.
+        :param line: number of line of lcd (1 or 2)
+        :param position: position in line
         :return: None
         """
         position -= 1
@@ -267,7 +269,7 @@ class I2CLcd(I2CDevice):
 
         Use ord(<int>) to use custom symbols (loaded in load_custom_char).
 
-        :param string: string or letter.
+        :param string: string or letter
         :return: None
         """
         for letter in string:
@@ -290,7 +292,7 @@ class I2CLcd(I2CDevice):
             0b00100
         ]
 
-        :param data: list with integers, where each integer is a line in character.
+        :param data: list with integers, where each integer is a line in character
         :param position: position in CGRAM (0-7)
         :return: None
         """
@@ -305,8 +307,8 @@ class I2CLcd(I2CDevice):
         # type: (int, bool) -> None
         """Write byte (value) to lcd. Using 4-bit mode (split value to 2 4-bit packs).
 
-        :param value: 8-bit data.
-        :param data_mode: True for data mode, False for command mode.
+        :param value: 8-bit data
+        :param data_mode: True for data mode, False for command mode
         :return: None
         """
         mode = int(data_mode)
@@ -336,7 +338,7 @@ class I2CLcd(I2CDevice):
         # type: (bool) -> None
         """Change lcd back light.
 
-        :param enable: True to enable backlight, False to disable.
+        :param enable: True to enable backlight, False to disable
         :return: None
         """
         self.__backlight = bool(enable)
