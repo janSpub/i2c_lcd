@@ -36,7 +36,7 @@ class I2CLcd(I2CDevice):
         :param dots5x11: True for 5x11 dots format display mode, False for 5x8
         :param warm_start: True for skip lcd initialization, False - not
         """
-        I2CDevice.__init__(self, 0x27)
+        I2CDevice.__init__(self, 0x3f)
         self.__backlight = True
         self.__line = None
 
